@@ -33,6 +33,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 # Production node_modules (includes prisma CLI + all transitive deps like valibot)
 COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 # Generated Prisma client (prod-deps doesn't run prisma generate)
