@@ -36,6 +36,21 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Claude Code
+.claude/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# env
+.env
+.env.local
+.env.production
+
+# Prisma (migrations are intentionally tracked for production deploys)
+
+# Build
+.next/
