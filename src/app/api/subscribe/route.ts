@@ -46,8 +46,8 @@ export async function POST(req: NextRequest) {
     const existing = await prisma.subscriber.findUnique({ where: { email } });
     if (existing) return NextResponse.json({ status: "already_subscribed" });
 
-    await prisma.subscriber.create({ data: { email, confirmed: true } });
-    await sendWelcome({ email });
+    const subscriber = await prisma.subscriber.create({ data: { email, confirmed: true } });
+    await sendWelcome({ email, subscriberId: subscriber.id });
     return NextResponse.json({ status: "subscribed" });
   } catch {
     return NextResponse.json({ error: "Bir hata oluştu." }, { status: 500 });

@@ -18,13 +18,13 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
 
   const [newsletter, subscribers] = await Promise.all([
     prisma.newsletter.findUnique({ where: { id } }),
-    prisma.subscriber.findMany({ where: { confirmed: true }, select: { email: true } }),
+    prisma.subscriber.findMany({ where: { confirmed: true }, select: { id: true, email: true } }),
   ]);
 
   if (!newsletter) return NextResponse.json({ error: "Bulunamadı." }, { status: 404 });
   if (newsletter.sentAt) return NextResponse.json({ error: "Zaten gönderildi." }, { status: 409 });
 
-  const recipients = subscribers.map((s) => s.email);
+  const recipients = subscribers;
   const { sent, failed } = await sendNewsletter({
     subject: newsletter.subject,
     title: newsletter.title,
