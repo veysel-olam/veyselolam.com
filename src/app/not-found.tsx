@@ -8,15 +8,17 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <main className="min-h-screen flex items-center justify-center px-6">
-      <div>
-        <div className="mb-8 flex items-center gap-2 font-mono text-[13px] text-muted-foreground select-none">
-          <span>~/veyselolam</span>
-          <span style={{ color: "var(--color-primary)" }}>$</span>
-          <span className="opacity-60">cd .</span>
-          <span className="opacity-40 ml-1">bash: .: No such file or directory</span>
+      <div className="max-w-sm w-full">
+        <div className="mb-8 font-mono text-[12px] text-muted-foreground select-none space-y-1">
+          <div className="flex items-center gap-2">
+            <span>~/veyselolam</span>
+            <span style={{ color: "var(--color-primary)" }}>$</span>
+            <span className="opacity-60">cd .</span>
+          </div>
+          <p className="opacity-40 pl-0">bash: .: No such file or directory</p>
         </div>
 
-        <p className="text-[15px] text-muted-foreground leading-relaxed mb-8 max-w-xs">
+        <p className="text-[15px] text-muted-foreground leading-relaxed mb-8">
           Aradığın sayfa burada değil. Taşınmış ya da hiç var olmamış olabilir.
         </p>
 

@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, useMotionValue, useTransform, useSpring, useReducedMotion } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { useTheme } from "./ThemeProvider";
 
 const NAV_ITEMS = [
@@ -59,72 +58,50 @@ const SearchIcon = () => (
   </svg>
 );
 
-function DockIcon({
-  mouseX,
-  children,
-  label,
+function DockItem({
   isActive,
-  onClick,
+  label,
+  children,
   href,
+  onClick,
 }: {
-  mouseX: ReturnType<typeof useMotionValue<number>>;
-  children: React.ReactNode;
-  label: string;
   isActive?: boolean;
-  onClick?: () => void;
+  label: string;
+  children: React.ReactNode;
   href?: string;
+  onClick?: () => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const reduced = useReducedMotion();
-
-  const distance = useTransform(mouseX, (val) => {
-    const el = ref.current;
-    if (!el) return Infinity;
-    const rect = el.getBoundingClientRect();
-    return val - (rect.left + rect.width / 2);
-  });
-
-  const scaleRaw = useTransform(distance, [-60, 0, 60], [1, reduced ? 1 : 1.22, 1]);
-  const scale = useSpring(scaleRaw, { stiffness: 320, damping: 28, mass: 0.5 });
-
-  const color = isActive ? "var(--color-primary)" : "var(--color-muted-foreground)";
-  const bg = isActive
-    ? "color-mix(in oklch, var(--color-primary) 12%, transparent)"
-    : "transparent";
-
-  const content = (
-    <motion.div
-      ref={ref}
-      style={{ scale }}
-      className="relative flex flex-col items-center"
-      title={label}
+  const inner = (
+    <span
+      className="relative flex flex-col items-center p-2 rounded-lg transition-colors duration-150"
+      style={{
+        color: isActive ? "var(--color-primary)" : "var(--color-muted-foreground)",
+        background: isActive
+          ? "color-mix(in oklch, var(--color-primary) 12%, transparent)"
+          : "transparent",
+      }}
     >
-      <div
-        className="p-2 rounded-lg transition-colors"
-        style={{ color, background: bg }}
-      >
-        {children}
-      </div>
+      {children}
       {isActive && (
         <span
           className="absolute -bottom-1.5 w-1 h-1 rounded-full"
           style={{ background: "var(--color-primary)" }}
         />
       )}
-    </motion.div>
+    </span>
   );
 
   if (href) {
     return (
-      <Link href={href} aria-label={label} className="outline-none">
-        {content}
+      <Link href={href} aria-label={label} title={label} className="outline-none hover:opacity-80 transition-opacity">
+        {inner}
       </Link>
     );
   }
 
   return (
-    <button onClick={onClick} aria-label={label} className="outline-none">
-      {content}
+    <button onClick={onClick} aria-label={label} title={label} className="outline-none hover:opacity-80 transition-opacity">
+      {inner}
     </button>
   );
 }
@@ -132,7 +109,6 @@ function DockIcon({
 export function Dock({ onSearchOpen }: { onSearchOpen?: () => void }) {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
-  const mouseX = useMotionValue(Infinity);
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
@@ -140,40 +116,28 @@ export function Dock({ onSearchOpen }: { onSearchOpen?: () => void }) {
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 280, damping: 26, delay: 0.05 }}
-        onMouseMove={(e) => mouseX.set(e.clientX)}
-        onMouseLeave={() => mouseX.set(Infinity)}
-        className="dock-panel flex items-end gap-0.5 px-2 py-2"
+        className="dock-panel flex items-center gap-0.5 px-2 py-2"
       >
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.href ||
             (item.href !== "/" && pathname.startsWith(item.href));
           return (
-            <DockIcon
-              key={item.href}
-              mouseX={mouseX}
-              href={item.href}
-              label={item.label}
-              isActive={isActive}
-            >
+            <DockItem key={item.href} href={item.href} label={item.label} isActive={isActive}>
               {item.icon}
-            </DockIcon>
+            </DockItem>
           );
         })}
 
-        <div className="w-px mx-1 self-stretch my-1 bg-border/70" />
+        <div className="w-px mx-1 self-stretch my-0.5 bg-border/70" />
 
-        <DockIcon mouseX={mouseX} label="Ara (⌘K)" onClick={onSearchOpen}>
+        <DockItem label="Ara (⌘K)" onClick={onSearchOpen}>
           <SearchIcon />
-        </DockIcon>
+        </DockItem>
 
-        <DockIcon
-          mouseX={mouseX}
-          label={theme === "light" ? "Karanlık mod" : "Aydınlık mod"}
-          onClick={toggle}
-        >
+        <DockItem label={theme === "light" ? "Karanlık mod" : "Aydınlık mod"} onClick={toggle}>
           {theme === "light" ? <MoonIcon /> : <SunIcon />}
-        </DockIcon>
+        </DockItem>
       </motion.nav>
     </div>
   );
