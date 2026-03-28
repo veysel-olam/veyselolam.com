@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatDateShort } from "@/lib/utils";
+import { DeletePostButton } from "@/components/admin/DeletePostButton";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +75,7 @@ export default async function AdminPostsPage() {
                 >
                   Düzenle
                 </Link>
+                <DeletePostButton postId={post.id} postTitle={post.title} />
               </div>
             </div>
           ))}

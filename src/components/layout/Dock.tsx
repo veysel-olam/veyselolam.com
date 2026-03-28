@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
+import { motion, useMotionValue, useTransform, useSpring, useReducedMotion } from "framer-motion";
 import { useRef } from "react";
 import { useTheme } from "./ThemeProvider";
 
@@ -75,6 +75,7 @@ function DockIcon({
   href?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
 
   const distance = useTransform(mouseX, (val) => {
     const el = ref.current;
@@ -83,8 +84,8 @@ function DockIcon({
     return val - (rect.left + rect.width / 2);
   });
 
-  const scaleRaw = useTransform(distance, [-72, 0, 72], [1, 1.45, 1]);
-  const scale = useSpring(scaleRaw, { stiffness: 380, damping: 26, mass: 0.6 });
+  const scaleRaw = useTransform(distance, [-60, 0, 60], [1, reduced ? 1 : 1.22, 1]);
+  const scale = useSpring(scaleRaw, { stiffness: 320, damping: 28, mass: 0.5 });
 
   const color = isActive ? "var(--color-primary)" : "var(--color-muted-foreground)";
   const bg = isActive
