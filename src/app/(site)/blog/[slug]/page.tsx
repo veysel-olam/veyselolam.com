@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { compileMdxContent, extractToc } from "@/lib/mdx";
 import { formatDate } from "@/lib/utils";
@@ -9,7 +10,7 @@ import { PostActions } from "@/components/blog/PostActions";
 import { CommentSection } from "@/components/blog/CommentSection";
 import { SubscribeForm } from "@/components/blog/SubscribeForm";
 import { ViewTracker } from "./ViewTracker";
-import type { Comment } from "@/types";
+import type { Comment as CommentType } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   if (!post) notFound();
 
-  const [{ content }, rawComments] = await Promise.all([
+  const [{ content }, rawComments, relatedPosts] = await Promise.all([
     compileMdxContent(post.content),
     prisma.comment.findMany({
       where: { postId: post.id, approved: true, parentId: null },
@@ -58,11 +59,23 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         },
       },
     }),
+    post.tags.length > 0
+      ? prisma.post.findMany({
+          where: {
+            published: true,
+            id: { not: post.id },
+            tags: { hasSome: post.tags },
+          },
+          orderBy: { publishedAt: "desc" },
+          take: 3,
+          select: { slug: true, title: true, summary: true, publishedAt: true },
+        })
+      : [],
   ]);
 
   const toc = extractToc(post.content);
 
-  const comments: Comment[] = rawComments.map((c) => ({
+  const comments: CommentType[] = rawComments.map((c: (typeof rawComments)[number]) => ({
     id: c.id,
     postId: c.postId,
     parentId: c.parentId,
@@ -103,12 +116,27 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                   <span>{post.readingTime}</span>
                 </>
               )}
+              {post.views > 0 && (
+                <>
+                  <span className="opacity-30">·</span>
+                  <span>{post.views.toLocaleString("tr-TR")} görüntülenme</span>
+                </>
+              )}
               {post.tags.length > 0 && (
                 <>
                   <span className="opacity-30">·</span>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5">
                     {post.tags.map((tag) => (
-                      <span key={tag}>#{tag}</span>
+                      <span
+                        key={tag}
+                        className="px-2 py-0.5 rounded-full text-[11px] font-medium"
+                        style={{
+                          background: "color-mix(in oklch, var(--color-primary) 10%, transparent)",
+                          color: "var(--color-primary)",
+                        }}
+                      >
+                        {tag}
+                      </span>
                     ))}
                   </div>
                 </>
@@ -140,6 +168,26 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             initialLikes={post._count.likes}
           />
         </div>
+
+        {relatedPosts.length > 0 && (
+          <div className="mt-10 pt-8 border-t border-border/60">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-5">
+              İlgili yazılar
+            </p>
+            <div className="space-y-4">
+              {relatedPosts.map((p: { slug: string; title: string; summary: string; publishedAt: Date | null }) => (
+                <Link key={p.slug} href={`/blog/${p.slug}`} className="group block">
+                  <p className="text-[14px] font-medium group-hover:text-primary transition-colors leading-snug mb-0.5">
+                    {p.title}
+                  </p>
+                  <p className="text-[13px] text-muted-foreground line-clamp-2 leading-relaxed">
+                    {p.summary}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mt-10 pt-8 border-t border-border/60">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-4">

@@ -6,6 +6,7 @@ const resend = process.env.RESEND_API_KEY
 
 const ADMIN_EMAIL = "veysel.olam@hotmail.com";
 const FROM = "blog@veyselolam.com";
+const FROM_NEWSLETTER = "bülten@veyselolam.com";
 
 export async function sendCommentNotification({
   postTitle,
@@ -46,4 +47,53 @@ export async function sendCommentNotification({
   }).catch(() => {
     // Mail hatası site işleyişini engellemesin
   });
+}
+
+export async function sendNewsletter({
+  subject,
+  title,
+  content,
+  recipients,
+}: {
+  subject: string;
+  title: string;
+  content: string;
+  recipients: string[];
+}) {
+  if (!resend || recipients.length === 0) return { sent: 0, failed: 0 };
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://veyselolam.com";
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a">
+      <h2 style="font-size:20px;font-weight:600;margin:0 0 16px">${title}</h2>
+      <div style="font-size:15px;line-height:1.7;color:#333;margin:0 0 32px">
+        ${content.replace(/\n/g, "<br>")}
+      </div>
+      <hr style="border:none;border-top:1px solid #e0e0e0;margin:0 0 16px">
+      <p style="font-size:12px;color:#888;margin:0">
+        Bu e-postayı <a href="${siteUrl}" style="color:#C4621E;text-decoration:none">veyselolam.com</a> üzerinden aldınız.
+      </p>
+    </div>
+  `;
+
+  // Resend batch API ile toplu gönderim
+  const batches: string[][] = [];
+  for (let i = 0; i < recipients.length; i += 50) {
+    batches.push(recipients.slice(i, i + 50));
+  }
+
+  let sent = 0;
+  let failed = 0;
+
+  for (const batch of batches) {
+    const results = await Promise.allSettled(
+      batch.map((to) =>
+        resend!.emails.send({ from: FROM_NEWSLETTER, to, subject, html })
+      )
+    );
+    results.forEach((r) => (r.status === "fulfilled" ? sent++ : failed++));
+  }
+
+  return { sent, failed };
 }

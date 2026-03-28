@@ -36,6 +36,16 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    label: "Ara",
+    href: "/ara",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
+        <circle cx="11" cy="11" r="7" />
+        <path d="M21 21l-4.35-4.35" />
+      </svg>
+    ),
+  },
 ];
 
 const MoonIcon = () => (

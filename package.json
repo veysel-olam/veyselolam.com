@@ -13,6 +13,7 @@
     "create-admin": "tsx --env-file=.env scripts/create-admin.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1019.0",
     "@hookform/resolvers": "^5.2.2",
     "@next/mdx": "^16.1.6",
     "@prisma/adapter-pg": "^7.4.1",

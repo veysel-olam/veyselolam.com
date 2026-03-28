@@ -37,6 +37,15 @@ model Subscriber {
   @@index([email])
 }
 
+model Newsletter {
+  id        String    @id @default(cuid())
+  title     String
+  subject   String
+  content   String    @db.Text
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
 model Like {
   id         String   @id @default(cuid())
   postId     String

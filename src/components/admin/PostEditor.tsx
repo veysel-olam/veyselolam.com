@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -33,8 +33,24 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const [tags, setTags] = useState((initialData?.tags ?? []).join(", "));
   const [published, setPublished] = useState(initialData?.published ?? false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "draft" | "published">("idle");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Yükleme hatası."); return; }
+      setCoverImage(data.url);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const generateSlug = (text: string) =>
     text
@@ -188,12 +204,34 @@ export function PostEditor({ initialData }: PostEditorProps) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Kapak Görseli URL</Label>
-            <Input
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-              placeholder="https://..."
+            <Label>Kapak Görseli</Label>
+            <div className="flex gap-2">
+              <Input
+                value={coverImage}
+                onChange={(e) => setCoverImage(e.target.value)}
+                placeholder="https://... veya yükle →"
+                className="flex-1"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="px-3 py-1.5 rounded-lg text-sm border border-border/60 text-muted-foreground hover:text-foreground hover:border-border transition-colors disabled:opacity-50 shrink-0"
+              >
+                {uploading ? "Yükleniyor..." : "Yükle"}
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); }}
             />
+            {coverImage && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={coverImage} alt="Kapak önizleme" className="mt-2 rounded-lg max-h-32 object-cover" />
+            )}
           </div>
         </div>
 

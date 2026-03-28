@@ -13,6 +13,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link href="/admin/comments" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Yorumlar
             </Link>
+            <Link href="/admin/bulten" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Bülten
+            </Link>
           </nav>
           <SignOutButton />
         </div>
