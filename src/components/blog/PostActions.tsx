@@ -97,8 +97,8 @@ export function PostActions({ postId, slug, title, initialLikes }: PostActionsPr
   };
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {/* Beğeni */}
+    <div className="flex items-center gap-1.5">
+      {/* Beğeni — her zaman sayı göster */}
       <button
         onClick={handleLike}
         disabled={loading}
@@ -106,42 +106,29 @@ export function PostActions({ postId, slug, title, initialLikes }: PostActionsPr
         style={liked ? { color: "var(--color-primary)", borderColor: "var(--color-ring)" } : {}}
       >
         <Heart className="w-4 h-4" fill={liked ? "currentColor" : "none"} strokeWidth={1.8} />
-        <span>{likes > 0 ? `${likes} beğeni` : "Beğen"}</span>
+        {likes > 0 && <span className="tabular-nums text-xs">{likes}</span>}
       </button>
 
-      {/* Bluesky */}
+      <div className="w-px h-4 bg-border/60 mx-1" />
+
+      {/* Paylaşım — sadece ikonlar */}
       <button onClick={handleBluesky} className={btnBase} title="Bluesky'da paylaş">
         <BlueSkyIcon />
-        <span className="hidden sm:inline">Bluesky</span>
       </button>
-
-      {/* LinkedIn */}
       <button onClick={handleLinkedIn} className={btnBase} title="LinkedIn'de paylaş">
         <LinkedInIcon />
-        <span className="hidden sm:inline">LinkedIn</span>
       </button>
-
-      {/* WhatsApp */}
       <button onClick={handleWhatsApp} className={btnBase} title="WhatsApp'ta paylaş">
         <WhatsAppIcon />
-        <span className="hidden sm:inline">WhatsApp</span>
       </button>
-
-      {/* Mail */}
       <button onClick={handleMail} className={btnBase} title="E-posta ile paylaş">
         <Mail className="w-4 h-4" strokeWidth={1.6} />
-        <span className="hidden sm:inline">Mail</span>
       </button>
-
-      {/* Linki kopyala */}
-      <button onClick={handleCopy} className={btnBase} title="Linki kopyala">
-        {copied ? (
-          <Check className="w-4 h-4" strokeWidth={1.8} />
-        ) : (
-          <Link2 className="w-4 h-4" strokeWidth={1.8} />
-        )}
-        <span className="hidden sm:inline">{copied ? "Kopyalandı!" : "Linki kopyala"}</span>
-        <span className="sm:hidden">{copied ? "✓" : ""}</span>
+      <button onClick={handleCopy} className={btnBase} title={copied ? "Kopyalandı!" : "Linki kopyala"}
+        style={copied ? { color: "var(--color-primary)" } : {}}>
+        {copied
+          ? <Check className="w-4 h-4" strokeWidth={1.8} />
+          : <Link2 className="w-4 h-4" strokeWidth={1.8} />}
       </button>
     </div>
   );

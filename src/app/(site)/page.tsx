@@ -68,7 +68,7 @@ export default async function HomePage() {
                   <span className="text-[15px] font-medium group-hover:text-primary transition-colors line-clamp-1">
                     {post.title}
                   </span>
-                  <span className="block text-sm text-muted-foreground mt-0.5 line-clamp-1">
+                  <span className="block text-[15px] text-muted-foreground mt-0.5 line-clamp-1">
                     {post.summary}
                   </span>
                 </div>

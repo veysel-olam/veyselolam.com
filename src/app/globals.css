@@ -128,6 +128,58 @@
   }
 }
 
+/* Prose tipografisini site geneline uyarla — 15px, tutarlı */
+.prose {
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+.prose :where(p):not(:where([class~="not-prose"] *)) {
+  font-size: 0.9375rem;
+  color: color-mix(in oklch, var(--color-foreground) 88%, transparent);
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.prose :where(h2):not(:where([class~="not-prose"] *)) {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin-top: 2.25rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.015em;
+  color: var(--color-foreground);
+}
+
+.prose :where(h3):not(:where([class~="not-prose"] *)) {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-foreground);
+}
+
+.prose :where(ul, ol):not(:where([class~="not-prose"] *)) {
+  font-size: 0.9375rem;
+}
+
+.prose :where(li):not(:where([class~="not-prose"] *)) {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+  color: color-mix(in oklch, var(--color-foreground) 88%, transparent);
+}
+
+.prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+  border-left-color: var(--color-border);
+  color: var(--color-muted-foreground);
+  font-style: normal;
+}
+
+.prose :where(hr):not(:where([class~="not-prose"] *)) {
+  border-color: var(--color-border);
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
 /* Kod bloğu içindeki code elementinin inline kod stilini sıfırla */
 .prose pre code {
   background: transparent;

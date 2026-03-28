@@ -86,7 +86,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <ReadingProgress />
       <ViewTracker postId={post.id} />
 
-      <main className="max-w-xl mx-auto px-6 pt-20 pb-32 relative">
+      <main className="max-w-xl lg:max-w-2xl mx-auto px-6 pt-20 pb-32 relative">
         {toc.length > 0 && (
           <div className="hidden xl:block fixed top-24 right-[max(2rem,calc(50%-42rem))] w-52">
             <TableOfContents items={toc} />
