@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -75,7 +75,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -8 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="fixed left-1/2 top-[20vh] z-[61] w-full max-w-lg -translate-x-1/2 px-4"
+            className="fixed left-1/2 top-[12vh] sm:top-[20vh] z-[61] w-full max-w-lg -translate-x-1/2 px-3 sm:px-4"
           >
             <div
               className="rounded-2xl overflow-hidden shadow-2xl"

@@ -97,7 +97,7 @@ export function PostActions({ postId, slug, title, initialLikes }: PostActionsPr
   };
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center flex-wrap gap-1.5">
       {/* Beğeni — her zaman sayı göster */}
       <button
         onClick={handleLike}
