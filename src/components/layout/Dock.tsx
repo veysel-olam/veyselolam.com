@@ -131,9 +131,16 @@ export function Dock({ onSearchOpen }: { onSearchOpen?: () => void }) {
 
         <div className="w-px mx-1 self-stretch my-0.5 bg-border/70" />
 
-        <DockItem label="Ara (⌘K)" onClick={onSearchOpen}>
+        <button
+          onClick={onSearchOpen}
+          aria-label="Ara"
+          title="Ara"
+          className="px-2 py-2 rounded-lg transition-opacity hover:opacity-80 outline-none flex items-center gap-1"
+          style={{ color: "var(--color-muted-foreground)" }}
+        >
+          <span className="text-[11px] tabular-nums font-medium opacity-50 select-none hidden sm:inline">⌘K</span>
           <SearchIcon />
-        </DockItem>
+        </button>
 
         <DockItem label={theme === "light" ? "Karanlık mod" : "Aydınlık mod"} onClick={toggle}>
           {theme === "light" ? <MoonIcon /> : <SunIcon />}

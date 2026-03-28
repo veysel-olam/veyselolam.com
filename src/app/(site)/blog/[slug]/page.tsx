@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { compileMdxContent, extractToc } from "@/lib/mdx";
 import { formatDate } from "@/lib/utils";
 import { TableOfContents } from "@/components/blog/TableOfContents";
-import { ReadingProgress } from "@/components/blog/ReadingProgress";
 import { PostActions } from "@/components/blog/PostActions";
 import { CommentSection } from "@/components/blog/CommentSection";
 import { SubscribeForm } from "@/components/blog/SubscribeForm";
@@ -83,7 +82,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     content: c.content,
     createdAt: c.createdAt,
     _count: { likes: c._count.likes },
-    replies: c.replies.map((r) => ({
+    replies: c.replies.map((r: (typeof c.replies)[number]) => ({
       id: r.id,
       postId: r.postId,
       parentId: r.parentId,
@@ -94,9 +93,26 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     })),
   }));
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://veyselolam.com";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.summary,
+    datePublished: post.publishedAt?.toISOString(),
+    dateModified: post.updatedAt.toISOString(),
+    url: `${siteUrl}/blog/${post.slug}`,
+    author: { "@type": "Person", name: "Veysel Olam", url: siteUrl },
+    ...(post.coverImage ? { image: post.coverImage } : {}),
+    keywords: post.tags.join(", "),
+  };
+
   return (
     <>
-      <ReadingProgress />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ViewTracker postId={post.id} />
 
       <main className="max-w-xl lg:max-w-2xl mx-auto px-6 pt-20 pb-32 relative">
@@ -116,27 +132,22 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                   <span>{post.readingTime}</span>
                 </>
               )}
-              {post.views > 0 && (
-                <>
-                  <span className="opacity-30">·</span>
-                  <span>{post.views.toLocaleString("tr-TR")} görüntülenme</span>
-                </>
-              )}
               {post.tags.length > 0 && (
                 <>
                   <span className="opacity-30">·</span>
                   <div className="flex gap-1.5">
-                    {post.tags.map((tag) => (
-                      <span
+                    {post.tags.map((tag: string) => (
+                      <Link
                         key={tag}
-                        className="px-2 py-0.5 rounded-full text-[11px] font-medium"
+                        href={`/blog/etiket/${encodeURIComponent(tag)}`}
+                        className="px-2 py-0.5 rounded-full text-[11px] font-medium transition-opacity hover:opacity-70"
                         style={{
                           background: "color-mix(in oklch, var(--color-primary) 10%, transparent)",
                           color: "var(--color-primary)",
                         }}
                       >
                         {tag}
-                      </span>
+                      </Link>
                     ))}
                   </div>
                 </>
@@ -146,6 +157,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               {post.title}
             </h1>
             <p className="text-[15px] text-muted-foreground leading-relaxed">{post.summary}</p>
+            {post.updatedAt && post.publishedAt &&
+              post.updatedAt.getTime() - post.publishedAt.getTime() > 86400000 && (
+                <p className="text-xs text-muted-foreground/60 mt-3">
+                  Son güncelleme: {formatDate(post.updatedAt)}
+                </p>
+            )}
           </header>
 
           {post.coverImage && (

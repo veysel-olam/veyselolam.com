@@ -4,6 +4,7 @@ import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import remarkGfm from "remark-gfm";
 import readingTime from "reading-time";
+import { CodeBlock } from "@/components/blog/CodeBlock";
 
 export interface TocItem {
   id: string;
@@ -48,6 +49,7 @@ export function getReadingTime(content: string): string {
 export async function compileMdxContent(source: string) {
   const { content, frontmatter } = await compileMDX({
     source,
+    components: { pre: CodeBlock },
     options: {
       parseFrontmatter: true,
       mdxOptions: {
