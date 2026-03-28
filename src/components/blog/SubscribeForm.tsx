@@ -4,9 +4,11 @@ import { useState } from "react";
 
 export function SubscribeForm() {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "already" | "error">("idle");
+  const [honeypot, setHoneypot] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "already" | "error" | "ratelimit">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email.trim()) return;
     setStatus("loading");
@@ -15,31 +17,56 @@ export function SubscribeForm() {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, website: honeypot }),
       });
       const data = await res.json();
 
+      if (res.status === 429) {
+        setStatus("ratelimit");
+        return;
+      }
+
       if (res.ok) {
-        setStatus(data.message === "already_subscribed" ? "already" : "success");
-        setEmail("");
+        if (data.status === "already_subscribed") {
+          setStatus("already");
+        } else {
+          setStatus("success");
+          setEmail("");
+        }
       } else {
+        setErrorMsg(data.error ?? "Bir hata oluştu.");
         setStatus("error");
       }
     } catch {
+      setErrorMsg("Bir hata oluştu, tekrar dene.");
       setStatus("error");
     }
   };
 
   if (status === "success") {
-    return <p className="text-[13px] text-primary">Abone oldun.</p>;
+    return <p className="text-[13px] text-primary">Abone oldun. Hoş geldin!</p>;
   }
 
   if (status === "already") {
     return <p className="text-[13px] text-muted-foreground">Bu adres zaten listede.</p>;
   }
 
+  if (status === "ratelimit") {
+    return <p className="text-[13px] text-muted-foreground">Çok fazla deneme. Bir süre bekle.</p>;
+  }
+
   return (
     <div className="space-y-2">
+      {/* Honeypot - botlar görür, insanlar görmez */}
+      <input
+        type="text"
+        value={honeypot}
+        onChange={(e) => setHoneypot(e.target.value)}
+        tabIndex={-1}
+        aria-hidden="true"
+        autoComplete="off"
+        style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", overflow: "hidden" }}
+      />
       <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
         <input
           type="email"
@@ -59,7 +86,7 @@ export function SubscribeForm() {
         </button>
       </form>
       {status === "error" && (
-        <p className="text-[12px] text-destructive">Bir hata oluştu, tekrar dene.</p>
+        <p className="text-[12px] text-destructive">{errorMsg}</p>
       )}
     </div>
   );

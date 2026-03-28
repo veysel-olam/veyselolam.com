@@ -100,7 +100,7 @@ function DockItem({
   );
 }
 
-export function Dock({ onSearchOpen }: { onSearchOpen?: () => void }) {
+export function Dock() {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
 
@@ -124,15 +124,6 @@ export function Dock({ onSearchOpen }: { onSearchOpen?: () => void }) {
         })}
 
         <div className="w-px mx-1 self-stretch my-0.5 bg-border/70" />
-
-        <button
-          onClick={onSearchOpen}
-          aria-label="Ara"
-          className="px-2.5 py-1.5 rounded-lg outline-none transition-colors hover:bg-muted/60 hidden sm:flex items-center"
-          style={{ color: "var(--color-muted-foreground)" }}
-        >
-          <span className="text-[11px] font-mono tabular-nums select-none">⌘K</span>
-        </button>
 
         <DockItem label={theme === "light" ? "Karanlık mod" : "Aydınlık mod"} onClick={toggle}>
           {theme === "light" ? <MoonIcon /> : <SunIcon />}

@@ -6,7 +6,7 @@ const resend = process.env.RESEND_API_KEY
 
 const ADMIN_EMAIL = "veysel.olam@hotmail.com";
 const FROM = "blog@veyselolam.com";
-const FROM_NEWSLETTER = "bülten@veyselolam.com";
+const FROM_NEWSLETTER = "bulten@veyselolam.com";
 
 export async function sendCommentNotification({
   postTitle,
@@ -47,6 +47,29 @@ export async function sendCommentNotification({
   }).catch(() => {
     // Mail hatası site işleyişini engellemesin
   });
+}
+
+export async function sendWelcome({ email }: { email: string }) {
+  if (!resend) return;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://veyselolam.com";
+
+  await resend.emails.send({
+    from: FROM_NEWSLETTER,
+    to: email,
+    subject: "Bültene hoş geldin",
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;color:#1a1a1a">
+        <h2 style="font-size:18px;font-weight:600;margin:0 0 12px">Abone oldun 👋</h2>
+        <p style="font-size:15px;line-height:1.7;color:#333;margin:0 0 24px">
+          Yeni yazılardan haberdar olacaksın. Sık sık değil, ama değerli olduğunda.
+        </p>
+        <p style="font-size:12px;color:#888;margin:0">
+          <a href="${siteUrl}" style="color:#C4621E;text-decoration:none">veyselolam.com</a>
+        </p>
+      </div>
+    `,
+  }).catch(() => {});
 }
 
 export async function sendNewsletter({
