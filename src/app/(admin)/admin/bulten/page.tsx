@@ -1,13 +1,21 @@
 import { prisma } from "@/lib/prisma";
 import { NewsletterList } from "@/components/admin/NewsletterList";
+import { SubscriberList } from "@/components/admin/SubscriberList";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewsletterAdminPage() {
-  const [newsletters, subscriberCount] = await Promise.all([
+  const [newsletters, subscribers] = await Promise.all([
     prisma.newsletter.findMany({ orderBy: { createdAt: "desc" } }),
-    prisma.subscriber.count({ where: { confirmed: true } }),
+    prisma.subscriber.findMany({ orderBy: { createdAt: "desc" } }),
   ]);
 
-  return <NewsletterList newsletters={newsletters} subscriberCount={subscriberCount} />;
+  const confirmedCount = subscribers.filter((s: { confirmed: boolean }) => s.confirmed).length;
+
+  return (
+    <div className="space-y-16">
+      <NewsletterList newsletters={newsletters} subscriberCount={confirmedCount} />
+      <SubscriberList subscribers={subscribers} />
+    </div>
+  );
 }
