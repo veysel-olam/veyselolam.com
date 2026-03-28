@@ -37,6 +37,8 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const [error, setError] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "draft" | "published">("idle");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inlineFileInputRef = useRef<HTMLInputElement>(null);
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -47,6 +49,27 @@ export function PostEditor({ initialData }: PostEditorProps) {
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Yükleme hatası."); return; }
       setCoverImage(data.url);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleInlineUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Yükleme hatası."); return; }
+      const tag = `\n![](${data.url})\n`;
+      const el = contentTextareaRef.current;
+      if (el) {
+        const start = el.selectionStart ?? content.length;
+        setContent(content.slice(0, start) + tag + content.slice(start));
+      } else {
+        setContent((c) => c + tag);
+      }
     } finally {
       setUploading(false);
     }
@@ -256,8 +279,26 @@ export function PostEditor({ initialData }: PostEditorProps) {
       </div>
 
       <div className="space-y-1.5">
-        <Label>İçerik (MDX)</Label>
+        <div className="flex items-center justify-between">
+          <Label>İçerik (MDX)</Label>
+          <button
+            type="button"
+            onClick={() => inlineFileInputRef.current?.click()}
+            disabled={uploading}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+          >
+            {uploading ? "Yükleniyor..." : "+ Görsel ekle"}
+          </button>
+        </div>
+        <input
+          ref={inlineFileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleInlineUpload(f); e.target.value = ""; }}
+        />
         <Textarea
+          ref={contentTextareaRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="## Başlık&#10;&#10;İçerik buraya..."

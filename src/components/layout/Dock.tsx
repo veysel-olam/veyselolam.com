@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
+import { useRef } from "react";
 import { useTheme } from "./ThemeProvider";
 
 const NAV_ITEMS = [
@@ -36,16 +37,6 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
-  {
-    label: "Ara",
-    href: "/ara",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
-        <circle cx="11" cy="11" r="7" />
-        <path d="M21 21l-4.35-4.35" />
-      </svg>
-    ),
-  },
 ];
 
 const MoonIcon = () => (
@@ -61,9 +52,86 @@ const SunIcon = () => (
   </svg>
 );
 
-export function Dock() {
+const SearchIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
+    <circle cx="11" cy="11" r="7" />
+    <path d="M21 21l-4.35-4.35" />
+  </svg>
+);
+
+function DockIcon({
+  mouseX,
+  children,
+  label,
+  isActive,
+  onClick,
+  href,
+}: {
+  mouseX: ReturnType<typeof useMotionValue<number>>;
+  children: React.ReactNode;
+  label: string;
+  isActive?: boolean;
+  onClick?: () => void;
+  href?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const distance = useTransform(mouseX, (val) => {
+    const el = ref.current;
+    if (!el) return Infinity;
+    const rect = el.getBoundingClientRect();
+    return val - (rect.left + rect.width / 2);
+  });
+
+  const scaleRaw = useTransform(distance, [-72, 0, 72], [1, 1.45, 1]);
+  const scale = useSpring(scaleRaw, { stiffness: 380, damping: 26, mass: 0.6 });
+
+  const color = isActive ? "var(--color-primary)" : "var(--color-muted-foreground)";
+  const bg = isActive
+    ? "color-mix(in oklch, var(--color-primary) 12%, transparent)"
+    : "transparent";
+
+  const content = (
+    <motion.div
+      ref={ref}
+      style={{ scale }}
+      className="relative flex flex-col items-center"
+      title={label}
+    >
+      <div
+        className="p-2 rounded-lg transition-colors"
+        style={{ color, background: bg }}
+      >
+        {children}
+      </div>
+      {isActive && (
+        <span
+          className="absolute -bottom-1.5 w-1 h-1 rounded-full"
+          style={{ background: "var(--color-primary)" }}
+        />
+      )}
+    </motion.div>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} aria-label={label} className="outline-none">
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <button onClick={onClick} aria-label={label} className="outline-none">
+      {content}
+    </button>
+  );
+}
+
+export function Dock({ onSearchOpen }: { onSearchOpen?: () => void }) {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
+  const mouseX = useMotionValue(Infinity);
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
@@ -71,45 +139,40 @@ export function Dock() {
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 280, damping: 26, delay: 0.05 }}
-        className="dock-panel flex items-center gap-0.5 px-2 py-2"
+        onMouseMove={(e) => mouseX.set(e.clientX)}
+        onMouseLeave={() => mouseX.set(Infinity)}
+        className="dock-panel flex items-end gap-0.5 px-2 py-2"
       >
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.href ||
             (item.href !== "/" && pathname.startsWith(item.href));
-
           return (
-            <Link
+            <DockIcon
               key={item.href}
+              mouseX={mouseX}
               href={item.href}
-              title={item.label}
-              className="p-2 rounded-lg transition-colors"
-              style={{
-                color: isActive
-                  ? "var(--color-primary)"
-                  : "var(--color-muted-foreground)",
-                background: isActive
-                  ? "color-mix(in oklch, var(--color-primary) 12%, transparent)"
-                  : "transparent",
-              }}
+              label={item.label}
+              isActive={isActive}
             >
               {item.icon}
-            </Link>
+            </DockIcon>
           );
         })}
 
-        <div className="w-px mx-1 self-stretch my-0.5 bg-border/70" />
+        <div className="w-px mx-1 self-stretch my-1 bg-border/70" />
 
-        <button
+        <DockIcon mouseX={mouseX} label="Ara (⌘K)" onClick={onSearchOpen}>
+          <SearchIcon />
+        </DockIcon>
+
+        <DockIcon
+          mouseX={mouseX}
+          label={theme === "light" ? "Karanlık mod" : "Aydınlık mod"}
           onClick={toggle}
-          title={theme === "light" ? "Karanlık mod" : "Aydınlık mod"}
-          className="p-2 rounded-lg transition-colors"
-          style={{ color: "var(--color-muted-foreground)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--color-foreground)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--color-muted-foreground)")}
         >
           {theme === "light" ? <MoonIcon /> : <SunIcon />}
-        </button>
+        </DockIcon>
       </motion.nav>
     </div>
   );
