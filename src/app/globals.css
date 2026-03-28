@@ -136,6 +136,18 @@
   font-size: inherit;
 }
 
+/* Mobilde kod bloğu yatay kaydırma */
+.prose pre {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobilde resimler taşmasın */
+.prose img {
+  max-width: 100%;
+  height: auto;
+}
+
 /* Başlık anchor linkleri — alt çizgi ve renk olmasın */
 .prose a.anchor {
   text-decoration: none !important;

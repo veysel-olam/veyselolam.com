@@ -14,7 +14,7 @@ export default function AboutPage() {
         </span>
       </div>
 
-      <div className="prose prose-neutral dark:prose-invert max-w-none">
+      <div className="space-y-4 text-[15px] leading-relaxed text-muted-foreground">
         <p>
           Merhaba, ben Veysel. Yazılım geliştirici olarak çalışıyorum.
         </p>

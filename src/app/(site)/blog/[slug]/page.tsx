@@ -95,22 +95,29 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         <article>
           <header className="mb-10">
-            {post.tags.length > 0 && (
-              <div className="flex gap-2 mb-4">
-                {post.tags.map((tag) => (
-                  <span key={tag} className="text-xs text-muted-foreground">#{tag}</span>
-                ))}
-              </div>
-            )}
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
+              {post.publishedAt && <span>{formatDate(post.publishedAt)}</span>}
+              {post.readingTime && (
+                <>
+                  <span className="opacity-30">·</span>
+                  <span>{post.readingTime}</span>
+                </>
+              )}
+              {post.tags.length > 0 && (
+                <>
+                  <span className="opacity-30">·</span>
+                  <div className="flex gap-2">
+                    {post.tags.map((tag) => (
+                      <span key={tag}>#{tag}</span>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             <h1 className="text-2xl font-semibold tracking-tight mb-3 leading-snug">
               {post.title}
             </h1>
-            <p className="text-muted-foreground leading-relaxed mb-4">{post.summary}</p>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              {post.publishedAt && <span>{formatDate(post.publishedAt)}</span>}
-              {post.readingTime && <span>{post.readingTime}</span>}
-              <span>{post.views} görüntülenme</span>
-            </div>
+            <p className="text-[15px] text-muted-foreground leading-relaxed">{post.summary}</p>
           </header>
 
           {post.coverImage && (
@@ -134,7 +141,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           />
         </div>
 
-        <div className="mt-10">
+        <div className="mt-10 pt-8 border-t border-border/60">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-4">
+            Yeni yazıları kaçırma
+          </p>
           <SubscribeForm />
         </div>
 

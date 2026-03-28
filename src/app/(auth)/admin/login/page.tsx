@@ -28,11 +28,15 @@ export default function AdminLoginPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
-        <h1 className="text-xl font-semibold mb-8 tracking-tight">Admin Girişi</h1>
+      <div className="w-full max-w-xs">
+        <div className="mb-8">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
+            Admin
+          </span>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label>E-posta</Label>
+            <Label className="text-sm text-muted-foreground">E-posta</Label>
             <Input
               type="email"
               value={email}
@@ -42,7 +46,7 @@ export default function AdminLoginPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Şifre</Label>
+            <Label className="text-sm text-muted-foreground">Şifre</Label>
             <Input
               type="password"
               value={password}

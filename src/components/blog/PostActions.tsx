@@ -110,37 +110,38 @@ export function PostActions({ postId, slug, title, initialLikes }: PostActionsPr
       </button>
 
       {/* Bluesky */}
-      <button onClick={handleBluesky} className={btnBase}>
+      <button onClick={handleBluesky} className={btnBase} title="Bluesky'da paylaş">
         <BlueSkyIcon />
-        <span>Bluesky</span>
+        <span className="hidden sm:inline">Bluesky</span>
       </button>
 
       {/* LinkedIn */}
-      <button onClick={handleLinkedIn} className={btnBase}>
+      <button onClick={handleLinkedIn} className={btnBase} title="LinkedIn'de paylaş">
         <LinkedInIcon />
-        <span>LinkedIn</span>
+        <span className="hidden sm:inline">LinkedIn</span>
       </button>
 
       {/* WhatsApp */}
-      <button onClick={handleWhatsApp} className={btnBase}>
+      <button onClick={handleWhatsApp} className={btnBase} title="WhatsApp'ta paylaş">
         <WhatsAppIcon />
-        <span>WhatsApp</span>
+        <span className="hidden sm:inline">WhatsApp</span>
       </button>
 
       {/* Mail */}
-      <button onClick={handleMail} className={btnBase}>
+      <button onClick={handleMail} className={btnBase} title="E-posta ile paylaş">
         <Mail className="w-4 h-4" strokeWidth={1.6} />
-        <span>Mail</span>
+        <span className="hidden sm:inline">Mail</span>
       </button>
 
       {/* Linki kopyala */}
-      <button onClick={handleCopy} className={btnBase}>
+      <button onClick={handleCopy} className={btnBase} title="Linki kopyala">
         {copied ? (
           <Check className="w-4 h-4" strokeWidth={1.8} />
         ) : (
           <Link2 className="w-4 h-4" strokeWidth={1.8} />
         )}
-        <span>{copied ? "Kopyalandı!" : "Linki kopyala"}</span>
+        <span className="hidden sm:inline">{copied ? "Kopyalandı!" : "Linki kopyala"}</span>
+        <span className="sm:hidden">{copied ? "✓" : ""}</span>
       </button>
     </div>
   );
