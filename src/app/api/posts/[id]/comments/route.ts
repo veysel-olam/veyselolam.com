@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendCommentNotification } from "@/lib/mail";
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -28,9 +29,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Eksik alan." }, { status: 400 });
   }
 
-  const comment = await prisma.comment.create({
-    data: { postId: id, authorName, authorEmail, content, parentId: parentId ?? null },
-  });
+  const [comment, post] = await Promise.all([
+    prisma.comment.create({
+      data: { postId: id, authorName, authorEmail, content, parentId: parentId ?? null },
+    }),
+    prisma.post.findUnique({
+      where: { id },
+      select: { title: true, slug: true },
+    }),
+  ]);
+
+  if (post) {
+    sendCommentNotification({
+      postTitle: post.title,
+      postSlug: post.slug,
+      authorName,
+      authorEmail,
+      content,
+    });
+  }
 
   return NextResponse.json(comment, { status: 201 });
 }
