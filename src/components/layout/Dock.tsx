@@ -51,12 +51,6 @@ const SunIcon = () => (
   </svg>
 );
 
-const SearchIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]">
-    <circle cx="11" cy="11" r="7" />
-    <path d="M21 21l-4.35-4.35" />
-  </svg>
-);
 
 function DockItem({
   isActive,
@@ -134,12 +128,10 @@ export function Dock({ onSearchOpen }: { onSearchOpen?: () => void }) {
         <button
           onClick={onSearchOpen}
           aria-label="Ara"
-          title="Ara"
-          className="px-2 py-2 rounded-lg transition-opacity hover:opacity-80 outline-none flex items-center gap-1"
+          className="px-2.5 py-1.5 rounded-lg outline-none transition-colors hover:bg-muted/60 hidden sm:flex items-center"
           style={{ color: "var(--color-muted-foreground)" }}
         >
-          <span className="text-[11px] tabular-nums font-medium opacity-50 select-none hidden sm:inline">⌘K</span>
-          <SearchIcon />
+          <span className="text-[11px] font-mono tabular-nums select-none">⌘K</span>
         </button>
 
         <DockItem label={theme === "light" ? "Karanlık mod" : "Aydınlık mod"} onClick={toggle}>
