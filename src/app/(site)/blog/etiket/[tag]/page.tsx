@@ -47,18 +47,22 @@ export default async function TagPage({ params }: { params: Promise<{ tag: strin
 
       <div className="divide-y divide-border/50">
         {posts.map((post) => (
-          <Link key={post.slug} href={`/blog/${post.slug}`} className="group block py-7">
+          <div key={post.slug} className="group py-7">
             <div className="flex items-start justify-between gap-4 mb-2">
-              <h2 className="text-[15px] font-medium leading-snug group-hover:text-primary transition-colors">
-                {post.title}
-              </h2>
+              <Link href={`/blog/${post.slug}`}>
+                <h2 className="text-[15px] font-medium leading-snug group-hover:text-primary transition-colors">
+                  {post.title}
+                </h2>
+              </Link>
               {post.publishedAt && (
                 <span className="text-xs text-muted-foreground tabular-nums shrink-0 mt-0.5">
                   {formatDateShort(post.publishedAt)}
                 </span>
               )}
             </div>
-            <p className="text-[15px] text-muted-foreground leading-relaxed mb-3">{post.summary}</p>
+            <Link href={`/blog/${post.slug}`}>
+              <p className="text-[15px] text-muted-foreground leading-relaxed mb-3">{post.summary}</p>
+            </Link>
             <div className="flex items-center gap-2">
               {post.readingTime && (
                 <span className="text-xs text-muted-foreground">{post.readingTime}</span>
@@ -71,7 +75,6 @@ export default async function TagPage({ params }: { params: Promise<{ tag: strin
                   <Link
                     key={t}
                     href={`/blog/etiket/${encodeURIComponent(t)}`}
-                    onClick={(e) => e.stopPropagation()}
                     className="px-2 py-0.5 rounded-full text-[11px] font-medium transition-opacity hover:opacity-70"
                     style={{
                       background: t === decoded
@@ -85,7 +88,7 @@ export default async function TagPage({ params }: { params: Promise<{ tag: strin
                 ))}
               </div>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
     </main>
