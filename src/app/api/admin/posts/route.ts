@@ -36,6 +36,10 @@ export async function POST(req: NextRequest) {
   try {
     await requireAdmin();
     const data = await req.json();
+    const existing = await prisma.post.findUnique({ where: { slug: data.slug } });
+    if (existing) {
+      return NextResponse.json({ error: `"${data.slug}" slug'u zaten kullanılıyor. Farklı bir slug dene.` }, { status: 409 });
+    }
     const post = await prisma.post.create({ data });
     return NextResponse.json(post, { status: 201 });
   } catch (err) {

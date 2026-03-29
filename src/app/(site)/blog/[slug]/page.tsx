@@ -122,6 +122,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
+        <div className="mb-6">
+          <Link href="/blog" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            ← Yazılar
+          </Link>
+        </div>
+
         <article>
           <header className="mb-10">
             <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
@@ -166,10 +172,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </header>
 
           {post.coverImage && (
-            <div className="mb-10 rounded-xl overflow-hidden">
+            <figure className="mb-10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={post.coverImage} alt={post.title} className="w-full" />
-            </div>
+              <img src={post.coverImage} alt={post.title} className="w-full rounded-sm" />
+            </figure>
           )}
 
           <div className="prose prose-neutral dark:prose-invert max-w-none">
