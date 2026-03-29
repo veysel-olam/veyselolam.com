@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ interface PostEditorProps {
     coverImage: string | null;
     published: boolean;
     tags: string[];
+    updatedAt?: Date | string;
   };
 }
 
@@ -37,9 +38,59 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const [error, setError] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "draft" | "published">("idle");
 
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saved">("idle");
+  const [showRestoreBanner, setShowRestoreBanner] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState<null | {
+    title: string; slug: string; summary: string;
+    content: string; coverImage: string; tags: string;
+  }>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inlineFileInputRef = useRef<HTMLInputElement>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const DRAFT_KEY = `draft_${initialData?.id ?? "new"}`;
+
+  // On mount: check for a saved draft
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as {
+        title: string; slug: string; summary: string;
+        content: string; coverImage: string; tags: string; savedAt: number;
+      };
+      const savedAt = draft.savedAt ?? 0;
+      const thirtySecondsAgo = Date.now() - 30_000;
+      if (savedAt < thirtySecondsAgo) return;
+      // For editing, only offer restore if draft is newer than current post
+      if (initialData?.updatedAt) {
+        const postUpdatedAt = new Date(initialData.updatedAt).getTime();
+        if (savedAt <= postUpdatedAt) return;
+      }
+      setPendingDraft(draft);
+      setShowRestoreBanner(true);
+    } catch {
+      // ignore parse errors
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-save every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      try {
+        const value = JSON.stringify({ title, slug, summary, content, coverImage, tags, savedAt: Date.now() });
+        localStorage.setItem(DRAFT_KEY, value);
+        setAutoSaveStatus("saved");
+        setTimeout(() => setAutoSaveStatus("idle"), 2000);
+      } catch {
+        // ignore storage errors
+      }
+    }, 30_000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, slug, summary, content, coverImage, tags]);
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -63,7 +114,8 @@ export function PostEditor({ initialData }: PostEditorProps) {
       const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Yükleme hatası."); return; }
-      const tag = `\n![](${data.url})\n`;
+      const altText = window.prompt("Görsel açıklaması (alt metin):", "") ?? "";
+      const tag = `\n![${altText}](${data.url})\n`;
       const el = contentTextareaRef.current;
       if (el) {
         const start = el.selectionStart ?? content.length;
@@ -122,6 +174,8 @@ export function PostEditor({ initialData }: PostEditorProps) {
         throw new Error(data.error ?? "Kayıt hatası");
       }
       const data = await res.json();
+      // Clear auto-save draft on successful save
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
       if (isEditing) {
         setPublished(isPublished);
         router.refresh();
@@ -137,6 +191,36 @@ export function PostEditor({ initialData }: PostEditorProps) {
       return null;
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    const el = e.currentTarget;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = content.slice(start, end);
+
+    const wrap = (marker: string) => {
+      e.preventDefault();
+      const newContent = content.slice(0, start) + marker + selected + marker + content.slice(end);
+      setContent(newContent);
+      setTimeout(() => {
+        el.selectionStart = start + marker.length;
+        el.selectionEnd = end + marker.length;
+      }, 0);
+    };
+
+    if (e.key === "b") wrap("**");
+    if (e.key === "i") wrap("_");
+    if (e.key === "k") {
+      e.preventDefault();
+      const url = window.prompt("Link URL:", "https://");
+      if (url) {
+        const linkText = selected || "link";
+        const newContent = content.slice(0, start) + `[${linkText}](${url})` + content.slice(end);
+        setContent(newContent);
+      }
     }
   };
 
@@ -169,7 +253,10 @@ export function PostEditor({ initialData }: PostEditorProps) {
               Sayfayı Aç →
             </Link>
           )}
-          {saveStatus !== "idle" && (
+          {autoSaveStatus === "saved" && (
+            <span className="text-[13px] text-muted-foreground">Otomatik kaydedildi</span>
+          )}
+          {saveStatus !== "idle" && autoSaveStatus === "idle" && (
             <span className="text-[13px] text-muted-foreground">
               {saveStatus === "published" ? "Yayınlandı" : "Taslak kaydedildi"}
             </span>
@@ -191,6 +278,33 @@ export function PostEditor({ initialData }: PostEditorProps) {
           </div>
         </div>
       </div>
+
+      {showRestoreBanner && pendingDraft && (
+        <div className="flex items-center justify-between text-[13px] bg-muted/60 border border-border/60 px-3 py-2 rounded-lg">
+          <span className="text-muted-foreground">Kaydedilmemiş bir taslak bulundu. Geri yüklensin mi?</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setTitle(pendingDraft.title);
+                setSlug(pendingDraft.slug);
+                setSummary(pendingDraft.summary);
+                setContent(pendingDraft.content);
+                setCoverImage(pendingDraft.coverImage);
+                setTags(pendingDraft.tags);
+                setShowRestoreBanner(false);
+                setPendingDraft(null);
+              }}
+              className="font-medium text-foreground hover:opacity-70 transition-opacity">
+              Geri Yükle
+            </button>
+            <button
+              onClick={() => { setShowRestoreBanner(false); setPendingDraft(null); }}
+              className="text-muted-foreground hover:text-foreground transition-colors">
+              Yoksay
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <p className="text-[13px] text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>
@@ -264,6 +378,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleInlineUpload(f); e.target.value = ""; }} />
         <Textarea ref={contentTextareaRef} value={content}
           onChange={(e) => setContent(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="## Başlık&#10;&#10;İçerik buraya..."
           rows={28} className="font-mono text-sm resize-none" />
       </div>

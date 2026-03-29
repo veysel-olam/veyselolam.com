@@ -20,6 +20,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
         coverImage: post.coverImage,
         published: post.published,
         tags: post.tags,
+        updatedAt: post.updatedAt,
       }}
     />
   );

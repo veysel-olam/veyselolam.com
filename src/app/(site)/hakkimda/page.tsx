@@ -37,7 +37,7 @@ const LINKS = [
   },
   {
     label: "Bluesky",
-    href: "https://bsky.app/profile/veyselolam.bsky.social",
+    href: "https://bsky.app/profile/veyselolam.com",
     icon: <BlueSkyIcon />,
   },
 ];

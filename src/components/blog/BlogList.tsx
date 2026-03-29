@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatDateShort } from "@/lib/utils";
 
-type Post = {
+type PostWithReadingTime = {
   slug: string;
   title: string;
   summary: string;
@@ -13,17 +13,63 @@ type Post = {
   tags: string[];
 };
 
-export function BlogList({ posts }: { posts: Post[] }) {
-  const [query, setQuery] = useState("");
+type PostFromApi = {
+  slug: string;
+  title: string;
+  summary: string;
+  publishedAt: string | null;
+  readingTime?: string | null;
+  tags: string[];
+};
 
-  const filtered = query.trim()
-    ? posts.filter(
-        (p) =>
-          p.title.toLowerCase().includes(query.toLowerCase()) ||
-          p.summary.toLowerCase().includes(query.toLowerCase()) ||
-          p.tags.some((t) => t.toLowerCase().includes(query.toLowerCase()))
-      )
-    : posts;
+type DisplayPost = {
+  slug: string;
+  title: string;
+  summary: string;
+  publishedAt: Date | string | null;
+  readingTime?: string | null;
+  tags: string[];
+};
+
+export function BlogList({ posts }: { posts: PostWithReadingTime[] }) {
+  const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<PostFromApi[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (query.trim().length < 2) {
+      setSearchResults(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data);
+        }
+      } catch {
+        // ignore fetch errors
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const filtered: DisplayPost[] = searchResults !== null
+    ? searchResults
+    : query.trim()
+      ? posts.filter(
+          (p) =>
+            p.title.toLowerCase().includes(query.toLowerCase()) ||
+            p.summary.toLowerCase().includes(query.toLowerCase()) ||
+            p.tags.some((t) => t.toLowerCase().includes(query.toLowerCase()))
+        )
+      : posts;
 
   return (
     <>
@@ -39,7 +85,10 @@ export function BlogList({ posts }: { posts: Post[] }) {
             placeholder="Ara…"
             className="text-xs bg-transparent border-0 outline-none text-foreground placeholder:text-muted-foreground/50 w-24 focus:w-36 transition-all duration-200"
           />
-          {posts.length > 0 && (
+          {searching && (
+            <span className="text-xs text-muted-foreground/50">...</span>
+          )}
+          {posts.length > 0 && !searching && (
             <span className="text-xs text-muted-foreground tabular-nums shrink-0">
               {filtered.length} yazı
             </span>
