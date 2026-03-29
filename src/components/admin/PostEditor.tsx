@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -36,9 +36,6 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "draft" | "published">("idle");
-  const [tab, setTab] = useState<"edit" | "preview">("edit");
-  const [previewHtml, setPreviewHtml] = useState("");
-  const [previewing, setPreviewing] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inlineFileInputRef = useRef<HTMLInputElement>(null);
@@ -103,10 +100,10 @@ export function PostEditor({ initialData }: PostEditorProps) {
     tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
   });
 
-  const handleSave = async (publish?: boolean) => {
+  const handleSave = async (publish?: boolean): Promise<string | null> => {
     if (!title.trim() || !slug.trim() || !summary.trim() || !content.trim()) {
       setError("Tüm alanları doldurun.");
-      return;
+      return null;
     }
     setSaving(true);
     setError("");
@@ -130,33 +127,26 @@ export function PostEditor({ initialData }: PostEditorProps) {
         router.refresh();
         setSaveStatus(isPublished ? "published" : "draft");
         setTimeout(() => setSaveStatus("idle"), 3000);
+        return initialData.id;
       } else {
-        router.push(`/admin/posts/${data.id}`);
         router.refresh();
+        return data.id;
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu.");
+      return null;
     } finally {
       setSaving(false);
     }
   };
 
-  const handlePreview = useCallback(async () => {
-    if (!content.trim()) return;
-    setPreviewing(true);
-    setTab("preview");
-    try {
-      const res = await fetch("/api/admin/preview-html", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
-      });
-      const data = await res.json();
-      setPreviewHtml(data.html ?? "");
-    } finally {
-      setPreviewing(false);
+  const handleSaveAndPreview = async () => {
+    const id = await handleSave(false);
+    if (id) {
+      window.open(`/admin/posts/${id}/preview`, "_blank");
+      if (!isEditing) router.push(`/admin/posts/${id}`);
     }
-  }, [content]);
+  };
 
   return (
     <div className="space-y-6">
@@ -185,6 +175,10 @@ export function PostEditor({ initialData }: PostEditorProps) {
             </span>
           )}
           <div className="flex gap-2">
+            <button onClick={handleSaveAndPreview} disabled={saving}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:border-border transition-colors disabled:opacity-50">
+              {saving ? "..." : "Önizle"}
+            </button>
             <button onClick={() => handleSave(false)} disabled={saving}
               className="px-3 py-1.5 rounded-lg text-sm font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:border-border transition-colors disabled:opacity-50">
               Taslak Kaydet
@@ -248,58 +242,30 @@ export function PostEditor({ initialData }: PostEditorProps) {
         </div>
       </div>
 
-      {/* İçerik — Edit / Önizle sekmeleri */}
+      {/* İçerik */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <div className="flex gap-1 p-0.5 rounded-lg bg-muted w-fit">
-            <button onClick={() => setTab("edit")}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                tab === "edit"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}>
-              Düzenle
-            </button>
-            <button onClick={handlePreview}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                tab === "preview"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}>
-              {previewing ? "Yükleniyor..." : "Önizle"}
+          <Label>İçerik (MDX)</Label>
+          <div className="flex items-center gap-3">
+            {content.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {getReadingTime(content)} · {content.length} karakter
+              </span>
+            )}
+            <button type="button" onClick={() => inlineFileInputRef.current?.click()}
+              disabled={uploading}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50">
+              {uploading ? "Yükleniyor..." : "+ Görsel ekle"}
             </button>
           </div>
-          {tab === "edit" && (
-            <div className="flex items-center gap-3">
-              {content.length > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {getReadingTime(content)} · {content.length} karakter
-                </span>
-              )}
-              <button type="button" onClick={() => inlineFileInputRef.current?.click()}
-                disabled={uploading}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50">
-                {uploading ? "Yükleniyor..." : "+ Görsel ekle"}
-              </button>
-            </div>
-          )}
         </div>
-
         <input ref={inlineFileInputRef} type="file"
           accept="image/jpeg,image/png,image/webp,image/gif" className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleInlineUpload(f); e.target.value = ""; }} />
-
-        {tab === "edit" ? (
-          <Textarea ref={contentTextareaRef} value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="## Başlık&#10;&#10;İçerik buraya..."
-            rows={28} className="font-mono text-sm resize-none" />
-        ) : (
-          <div
-            className="min-h-[560px] border border-border/60 rounded-lg p-6 prose prose-neutral dark:prose-invert max-w-none overflow-auto"
-            dangerouslySetInnerHTML={{ __html: previewHtml || "<p class='text-muted-foreground text-sm'>Önizleme yükleniyor...</p>" }}
-          />
-        )}
+        <Textarea ref={contentTextareaRef} value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="## Başlık&#10;&#10;İçerik buraya..."
+          rows={28} className="font-mono text-sm resize-none" />
       </div>
     </div>
   );
