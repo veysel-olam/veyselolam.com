@@ -7,25 +7,45 @@ datasource db {
 }
 
 model Post {
-  id          String    @id @default(cuid())
-  slug        String    @unique
-  title       String
-  summary     String
-  content     String    @db.Text
-  coverImage  String?
-  published   Boolean   @default(false)
-  publishedAt DateTime?
-  readingTime String?
-  views       Int       @default(0)
-  tags        String[]  @default([])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  title        String
+  summary      String
+  content      String    @db.Text
+  coverImage   String?
+  published    Boolean   @default(false)
+  publishedAt  DateTime?
+  readingTime  String?
+  views        Int       @default(0)
+  tags         String[]  @default([])
+  seriesId     String?
+  seriesOrder  Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
+  series   Series?   @relation(fields: [seriesId], references: [id], onDelete: SetNull)
   likes    Like[]
   comments Comment[]
 
   @@index([slug])
   @@index([published, publishedAt])
+  @@index([seriesId])
+}
+
+model Series {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  posts Post[]
+}
+
+model SiteContent {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
 }
 
 model Subscriber {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Ben Kimim",
@@ -48,7 +49,13 @@ const STACK = [
   "Tailwind CSS",
 ];
 
-export default function AboutPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AboutPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const bio = await (prisma as any).siteContent.findUnique({ where: { key: "hakkimda" } }) as { value: string } | null;
+  const paragraphs = (bio?.value ?? "").split("\n\n").filter(Boolean);
+
   return (
     <main className="max-w-xl mx-auto px-6 pt-24 pb-32">
       <div className="mb-10">
@@ -60,18 +67,7 @@ export default function AboutPage() {
       <div className="space-y-10">
         {/* Tanıtım */}
         <div className="space-y-4 text-[15px] leading-relaxed text-muted-foreground">
-          <p>
-            Ben Veysel. Yazılım geliştirici; web uygulamaları ve ürünler üzerine çalışıyorum.
-          </p>
-          <p>
-            Yazılımın yanı sıra antropoloji, sosyoloji ve genel olarak insan üzerine
-            düşünmeyi seviyorum. Teknolojinin toplumla kesiştiği noktalar, sistemlerin
-            nasıl çalıştığı ve neden öyle çalıştığı ilgimi çeken sorular.
-          </p>
-          <p>
-            Bu site, her iki alandaki gözlemlerimi ve düşüncelerimi yazdığım kişisel
-            blogum. Bazen teknik, bazen değil.
-          </p>
+          {paragraphs.map((p: string, i: number) => <p key={i}>{p}</p>)}
         </div>
 
         {/* Teknoloji */}

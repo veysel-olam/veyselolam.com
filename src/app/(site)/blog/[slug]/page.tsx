@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { compileMdxContent, extractToc } from "@/lib/mdx";
 import { formatDate } from "@/lib/utils";
@@ -9,6 +10,7 @@ import { PostActions } from "@/components/blog/PostActions";
 import { CommentSection } from "@/components/blog/CommentSection";
 import { SubscribeForm } from "@/components/blog/SubscribeForm";
 import { ViewTracker } from "./ViewTracker";
+import { HistoryTracker } from "@/components/blog/HistoryTracker";
 import type { Comment as CommentType } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -36,13 +38,32 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
 
   const post = await prisma.post.findUnique({
-    where: { slug, published: true },
+    where: { slug },
     include: {
       _count: { select: { likes: true } },
     },
   });
 
-  if (!post) notFound();
+  if (!post || !post.published || (post.publishedAt && post.publishedAt > new Date())) return notFound();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const postAny = post as any;
+
+  const seriesData: {
+    title: string;
+    posts: { slug: string; title: string; seriesOrder: number | null }[];
+  } | null = postAny.seriesId
+    ? await (prisma as any).series.findUnique({
+        where: { id: postAny.seriesId },
+        include: {
+          posts: {
+            where: { published: true },
+            orderBy: { seriesOrder: "asc" },
+            select: { slug: true, title: true, seriesOrder: true },
+          },
+        },
+      })
+    : null;
 
   const [{ content }, rawComments, relatedPosts] = await Promise.all([
     compileMdxContent(post.content),
@@ -114,6 +135,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <ViewTracker postId={post.id} />
+      <HistoryTracker slug={post.slug} title={post.title} />
 
       <main className="max-w-xl lg:max-w-2xl mx-auto px-6 pt-20 pb-32 relative">
         {toc.length > 0 && (
@@ -171,10 +193,37 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             )}
           </header>
 
+          {seriesData && (
+            <div className="mb-8 border border-border/60 rounded-xl p-4">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-3">
+                Seri: {seriesData.title}
+              </p>
+              <ol className="space-y-1.5">
+                {seriesData.posts.map((p: { slug: string; title: string; seriesOrder: number | null }) => (
+                  <li key={p.slug} className="flex items-baseline gap-2">
+                    <span className="text-xs text-muted-foreground tabular-nums w-4">{p.seriesOrder}.</span>
+                    {p.slug === post.slug ? (
+                      <span className="text-[13px] font-medium">{p.title}</span>
+                    ) : (
+                      <Link href={`/blog/${p.slug}`} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+                        {p.title}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
           {post.coverImage && (
             <figure className="mb-10">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={post.coverImage} alt={post.title} className="w-full rounded-sm" />
+              <Image
+                src={post.coverImage}
+                alt={post.title}
+                width={1200}
+                height={630}
+                className="w-full h-auto rounded-sm"
+              />
             </figure>
           )}
 

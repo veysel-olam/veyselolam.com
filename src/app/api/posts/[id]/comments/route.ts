@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendCommentNotification } from "@/lib/mail";
+import { sendCommentNotification, sendReplyNotification } from "@/lib/mail";
+
+const commentRateLimit = new Map<string, { count: number; resetAt: number }>();
+const COMMENT_LIMIT = 5;
+const COMMENT_WINDOW_MS = 60 * 60 * 1000; // 1 saat
+
+function checkCommentRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = commentRateLimit.get(ip);
+  if (!entry || now > entry.resetAt) {
+    commentRateLimit.set(ip, { count: 1, resetAt: now + COMMENT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= COMMENT_LIMIT) return false;
+  entry.count++;
+  return true;
+}
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,6 +38,11 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ip = req.headers.get("fly-client-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!checkCommentRateLimit(ip)) {
+    return NextResponse.json({ error: "Çok fazla yorum. Bir süre bekle." }, { status: 429 });
+  }
+
   const { id } = await params;
   const { authorName, authorEmail, content, parentId } = await req.json();
 
@@ -47,6 +68,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       authorEmail,
       content,
     });
+  }
+
+  if (parentId && post) {
+    const parentComment = await prisma.comment.findUnique({
+      where: { id: parentId },
+      select: { authorName: true, authorEmail: true },
+    });
+    if (parentComment && parentComment.authorEmail !== authorEmail) {
+      sendReplyNotification({
+        parentAuthorName: parentComment.authorName,
+        parentAuthorEmail: parentComment.authorEmail,
+        replyAuthorName: authorName,
+        content,
+        postTitle: post.title,
+        postSlug: post.slug,
+      });
+    }
   }
 
   return NextResponse.json(comment, { status: 201 });

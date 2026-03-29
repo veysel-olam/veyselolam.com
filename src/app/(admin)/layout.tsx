@@ -19,6 +19,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link href="/admin/istatistik" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               İstatistik
             </Link>
+            <Link href="/admin/hakkimda" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Hakkımda
+            </Link>
           </nav>
           <SignOutButton />
         </div>

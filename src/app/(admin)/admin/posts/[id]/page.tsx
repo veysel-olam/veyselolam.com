@@ -21,6 +21,8 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
         published: post.published,
         tags: post.tags,
         updatedAt: post.updatedAt,
+        seriesId: (post as any).seriesId,
+        seriesOrder: (post as any).seriesOrder,
       }}
     />
   );

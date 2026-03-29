@@ -63,6 +63,42 @@ export async function sendCommentNotification({
   }).catch(() => {});
 }
 
+export async function sendReplyNotification({
+  parentAuthorEmail,
+  replyAuthorName,
+  content,
+  postTitle,
+  postSlug,
+}: {
+  parentAuthorName: string;
+  parentAuthorEmail: string;
+  replyAuthorName: string;
+  content: string;
+  postTitle: string;
+  postSlug: string;
+}) {
+  if (!resend) return;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://veyselolam.com";
+  const postUrl = `${siteUrl}/blog/${postSlug}#yorumlar`;
+
+  await resend.emails.send({
+    from: FROM,
+    to: parentAuthorEmail,
+    subject: `Yorumunuza yanıt: ${postTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;color:#1a1a1a">
+        <p style="margin:0 0 16px"><strong>${replyAuthorName}</strong> yorumunuza yanıt bıraktı:</p>
+        <blockquote style="margin:0 0 16px;padding:12px 16px;border-left:3px solid #e0e0e0;color:#444;background:#f9f9f9;border-radius:4px">
+          ${content}
+        </blockquote>
+        <p style="margin:0;font-size:13px">
+          <a href="${postUrl}" style="color:#C4621E;text-decoration:none">Yanıtı gör →</a>
+        </p>
+      </div>
+    `,
+  }).catch(() => {});
+}
+
 export async function sendWelcome({
   email,
   subscriberId,

@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatDateShort } from "@/lib/utils";
+import { ReadingHistory } from "./ReadingHistory";
+
+const PER_PAGE = 10;
 
 type PostWithReadingTime = {
   slug: string;
@@ -35,8 +38,10 @@ export function BlogList({ posts }: { posts: PostWithReadingTime[] }) {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<PostFromApi[] | null>(null);
   const [searching, setSearching] = useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
+    setPage(1);
     if (query.trim().length < 2) {
       setSearchResults(null);
       return;
@@ -71,6 +76,12 @@ export function BlogList({ posts }: { posts: PostWithReadingTime[] }) {
         )
       : posts;
 
+  const isSearching = query.trim().length >= 2;
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const paginated = isSearching
+    ? filtered
+    : filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
   return (
     <>
       <div className="flex items-center justify-between mb-10">
@@ -102,7 +113,7 @@ export function BlogList({ posts }: { posts: PostWithReadingTime[] }) {
         <p className="text-muted-foreground text-[15px]">Sonuç bulunamadı.</p>
       ) : (
         <div className="divide-y divide-border/50">
-          {filtered.map((post) => (
+          {paginated.map((post) => (
             <Link key={post.slug} href={`/blog/${post.slug}`} className="group block py-7">
               <div className="flex items-start justify-between gap-4 mb-2">
                 <h2 className="text-[15px] font-medium leading-snug group-hover:text-primary transition-colors">
@@ -147,6 +158,22 @@ export function BlogList({ posts }: { posts: PostWithReadingTime[] }) {
           ))}
         </div>
       )}
+
+      {!isSearching && totalPages > 1 && (
+        <div className="flex items-center justify-between pt-8 mt-4 border-t border-border/50">
+          <button onClick={() => setPage(p => p - 1)} disabled={page === 1}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30">
+            ← Önceki
+          </button>
+          <span className="text-xs text-muted-foreground">{page} / {totalPages}</span>
+          <button onClick={() => setPage(p => p + 1)} disabled={page === totalPages}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30">
+            Sonraki →
+          </button>
+        </div>
+      )}
+
+      {!isSearching && <ReadingHistory />}
     </>
   );
 }

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export default async function BlogPage() {
   const posts = await prisma.post.findMany({
-    where: { published: true },
+    where: { published: true, publishedAt: { lte: new Date() } },
     orderBy: { publishedAt: "desc" },
     select: {
       slug: true,

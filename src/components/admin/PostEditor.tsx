@@ -19,6 +19,9 @@ interface PostEditorProps {
     published: boolean;
     tags: string[];
     updatedAt?: Date | string;
+    seriesId?: string | null;
+    seriesOrder?: number | null;
+    scheduledFor?: string;
   };
 }
 
@@ -33,6 +36,10 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const [coverImage, setCoverImage] = useState(initialData?.coverImage ?? "");
   const [tags, setTags] = useState((initialData?.tags ?? []).join(", "));
   const [published, setPublished] = useState(initialData?.published ?? false);
+  const [seriesId, setSeriesId] = useState(initialData?.seriesId ?? "");
+  const [seriesOrder, setSeriesOrder] = useState(initialData?.seriesOrder?.toString() ?? "");
+  const [availableSeries, setAvailableSeries] = useState<{ id: string; title: string }[]>([]);
+  const [scheduledFor, setScheduledFor] = useState(initialData?.scheduledFor ?? "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -50,6 +57,15 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const DRAFT_KEY = `draft_${initialData?.id ?? "new"}`;
+
+  // On mount: fetch available series
+  useEffect(() => {
+    fetch("/api/admin/series")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setAvailableSeries(data); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // On mount: check for a saved draft
   useEffect(() => {
@@ -148,8 +164,10 @@ export function PostEditor({ initialData }: PostEditorProps) {
     coverImage: coverImage || null,
     published: isPublished,
     readingTime: getReadingTime(content),
-    publishedAt: isPublished ? new Date().toISOString() : null,
+    publishedAt: isPublished ? (scheduledFor || new Date().toISOString()) : null,
     tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+    seriesId: seriesId || null,
+    seriesOrder: seriesOrder ? parseInt(seriesOrder) : null,
   });
 
   const handleSave = async (publish?: boolean): Promise<string | null> => {
@@ -345,9 +363,42 @@ export function PostEditor({ initialData }: PostEditorProps) {
           </div>
         </div>
         <div className="space-y-1.5">
+          <Label>Yayın zamanı</Label>
+          <Input
+            type="datetime-local"
+            value={scheduledFor}
+            onChange={(e) => setScheduledFor(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
           <Label>Etiketler</Label>
           <Input value={tags} onChange={(e) => setTags(e.target.value)}
             placeholder="nextjs, typescript, react  (virgülle ayır)" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label>Seri</Label>
+            <select
+              value={seriesId}
+              onChange={(e) => setSeriesId(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">— Seri yok —</option>
+              {availableSeries.map((s) => (
+                <option key={s.id} value={s.id}>{s.title}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Seri sırası</Label>
+            <Input
+              type="number"
+              value={seriesOrder}
+              onChange={(e) => setSeriesOrder(e.target.value)}
+              placeholder="1"
+              min={1}
+            />
+          </div>
         </div>
         <div className="space-y-1.5">
           <Label>Özet</Label>

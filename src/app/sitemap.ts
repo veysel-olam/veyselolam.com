@@ -5,7 +5,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://veyselolam.com";
 
   const posts = await prisma.post.findMany({
-    where: { published: true },
+    where: { published: true, publishedAt: { lte: new Date() } },
     select: { slug: true, updatedAt: true },
   }).catch(() => [] as { slug: string; updatedAt: Date }[]);
 

@@ -1,8 +1,18 @@
+import Image from "next/image";
+
 export function PostImage({ src, alt }: { src?: string; alt?: string }) {
   return (
     <figure className="my-6">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt ?? ""} className="w-full rounded-sm" />
+      {src && (
+        <Image
+          src={src}
+          alt={alt ?? ""}
+          width={1200}
+          height={630}
+          className="w-full h-auto rounded-sm"
+          sizes="(max-width: 640px) 100vw, 672px"
+        />
+      )}
       {alt && (
         <figcaption className="mt-2 text-center text-xs text-muted-foreground italic">
           {alt}
