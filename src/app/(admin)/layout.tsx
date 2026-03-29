@@ -16,6 +16,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link href="/admin/bulten" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Bülten
             </Link>
+            <Link href="/admin/istatistik" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              İstatistik
+            </Link>
           </nav>
           <SignOutButton />
         </div>
